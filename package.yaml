@@ -1,0 +1,47 @@
+name:        stream
+version:     0.1.0.0
+github:      "zdavep/stream"
+license:     BSD3
+author:      "David Pederson"
+maintainer:  "dave.pederson@gmail.com"
+copyright:   "Copyright 2019-present, the original author(s)"
+description: Please see the README on GitHub at <https://github.com/zdavep/stream#readme>
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+  dependencies:
+  - monad-par
+  - deepseq
+
+executables:
+  stream-exe:
+    main: Main.hs
+    source-dirs: app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -eventlog
+    dependencies:
+    - stream
+    - monad-par
+
+tests:
+  stream-test:
+    main: Spec.hs
+    source-dirs: test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - stream
