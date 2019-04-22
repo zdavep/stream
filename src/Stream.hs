@@ -51,16 +51,16 @@ streamMap fn is = do
   fork $ loop is os
   return os
   where
-    putCons h t o = do
-      v <- new
-      put o (Cons (fn h) v)
-      loop t v
     loop i o = do
       il <- get i
       case il of
         Nil -> put o Nil
-        Cons h t -> putCons h t o
-        Fork op (Cons h t) -> fork op >> putCons h t o
+        Cons h t -> proc h t o
+        Fork op (Cons h t) -> fork op >> proc h t o
+    proc h t o = do
+      v <- new
+      put o (Cons (fn h) v)
+      loop t v
 
 -- Filter a stream using a predicate function producing another stream.
 streamFilter :: NFData a => (a -> Bool) -> Stream a -> Par (Stream a)
@@ -69,18 +69,18 @@ streamFilter p is = do
   fork $ loop is os
   return os
   where
-    putCons h t o
+    loop i o = do
+      il <- get i
+      case il of
+        Nil -> put o Nil
+        Cons h t -> proc h t o
+        Fork op (Cons h t) -> fork op >> proc h t o
+    proc h t o
       | p h = do
         v <- new
         put_ o (Cons h v)
         loop t v
       | otherwise = loop t o
-    loop i o = do
-      il <- get i
-      case il of
-        Nil -> put o Nil
-        Cons h t -> putCons h t o
-        Fork op (Cons h t) -> fork op >> putCons h t o
 
 -- Rate limit a stream
 streamLimiter :: NFData a => Int -> Stream a -> Par (Stream a)
@@ -89,6 +89,12 @@ streamLimiter n is = do
   fork $ loop n is os
   return os
   where
+    loop x i o = do
+      il <- get i
+      case il of
+        Nil -> put o Nil
+        Cons h t -> proc x h t o
+        Fork op (Cons h t) -> fork op >> proc x h t o
     proc x h t o
       | x > 0 = putCons x h t o
       | otherwise = putFork h t o
@@ -100,9 +106,3 @@ streamLimiter n is = do
       v <- new
       let op = loop n t v
       put_ o (Fork op (Cons h v))
-    loop x i o = do
-      il <- get i
-      case il of
-        Nil -> put o Nil
-        Cons h t -> proc x h t o
-        Fork op (Cons h t) -> fork op >> proc x h t o
