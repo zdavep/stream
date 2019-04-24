@@ -13,12 +13,11 @@ fib n = fib (n-1) + fib (n-2)
 pipeline :: Int -> [Integer] -> Integer
 pipeline n xs =
   runPar $ do
-    s0 <- streamFromList n xs          -- emit in batches
-    s1 <- streamFilter even s0         -- only stream even numbers
-    s2 <- streamLimiter (n `div` 2) s1 -- limit batch size for mapping
-    s3 <- streamMap fib s2             -- calc fib number
-    sm <- streamFold (+) 0 s3          -- streaming sum op
-    return sm                          -- result
+    s0 <- streamFromList n xs              -- emit list in batches of size `n`
+    s1 <- streamFilter even (n `div` 2) s0 -- emit even numbers + halve batch size
+    s2 <- streamMap fib n s1               -- calc fib number
+    sm <- streamFold (+) 0 s2              -- streaming sum op
+    return sm                              -- result
 
 -- Calculate and print the sum of some even Fibonacci numbers.
 main :: IO ()

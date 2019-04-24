@@ -1,7 +1,14 @@
 {-# LANGUAGE BangPatterns #-}
 {-# OPTIONS_GHC -fwarn-unused-imports #-}
 
-module Stream where
+module Stream
+  ( IList
+  , Stream
+  , streamFromList
+  , streamFold
+  , streamMap
+  , streamFilter
+  ) where
 
 import Control.DeepSeq
 import Control.Monad.Par
@@ -45,46 +52,8 @@ streamFold fn !acc is = do
     Fork op (Cons h t) -> fork op >> streamFold fn (fn acc h) t
 
 -- Apply a map function to a stream producing another stream.
-streamMap :: NFData b => (a -> b) -> Stream a -> Par (Stream b)
-streamMap fn is = do
-  os <- new
-  fork $ loop is os
-  return os
-  where
-    loop i o = do
-      il <- get i
-      case il of
-        Nil -> put o Nil
-        Cons h t -> proc h t o
-        Fork op (Cons h t) -> fork op >> proc h t o
-    proc h t o = do
-      v <- new
-      put o (Cons (fn h) v)
-      loop t v
-
--- Filter a stream using a predicate function producing another stream.
-streamFilter :: NFData a => (a -> Bool) -> Stream a -> Par (Stream a)
-streamFilter p is = do
-  os <- new
-  fork $ loop is os
-  return os
-  where
-    loop i o = do
-      il <- get i
-      case il of
-        Nil -> put o Nil
-        Cons h t -> proc h t o
-        Fork op (Cons h t) -> fork op >> proc h t o
-    proc h t o
-      | p h = do
-        v <- new
-        put_ o (Cons h v)
-        loop t v
-      | otherwise = loop t o
-
--- Rate limit a stream
-streamLimiter :: NFData a => Int -> Stream a -> Par (Stream a)
-streamLimiter n is = do
+streamMap :: NFData b => (a -> b) -> Int -> Stream a -> Par (Stream b)
+streamMap fn n is = do
   os <- new
   fork $ loop n is os
   return os
@@ -96,13 +65,36 @@ streamLimiter n is = do
         Cons h t -> proc x h t o
         Fork op (Cons h t) -> fork op >> proc x h t o
     proc x h t o
-      | x > 0 = putCons x h t o
-      | otherwise = putFork h t o
-    putCons x h t o = do
-      v <- new
-      put_ o (Cons h v)
-      loop (x - 1) t v
-    putFork h t o = do
-      v <- new
-      let op = loop n t v
-      put_ o (Fork op (Cons h v))
+      | x > 0 = do
+          v <- new
+          put o (Cons (fn h) v)
+          loop (x - 1) t v
+      | otherwise = do
+          v <- new
+          let op = loop n t v
+          put_ o (Fork op (Cons (fn h) v))
+
+-- Filter a stream using a predicate function producing another stream.
+streamFilter :: NFData a => (a -> Bool) -> Int -> Stream a -> Par (Stream a)
+streamFilter p n is = do
+  os <- new
+  fork $ loop n is os
+  return os
+  where
+    loop x i o = do
+      il <- get i
+      case il of
+        Nil -> put o Nil
+        Cons h t -> proc x h t o
+        Fork op (Cons h t) -> fork op >> proc x h t o
+    proc x h t o
+      | x > 0 && p h = do
+          v <- new
+          put_ o (Cons h v)
+          loop (x - 1) t v
+      | x <= 0 && p h = do
+          v <- new
+          let op = loop n t v
+          put_ o (Fork op (Cons h v))
+      | otherwise =
+          loop (x - 1) t o
