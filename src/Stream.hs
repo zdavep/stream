@@ -2,9 +2,7 @@
 {-# OPTIONS_GHC -fwarn-unused-imports #-}
 
 module Stream
-  ( IList
-  , Stream
-  , streamFromList
+  ( streamFromList
   , streamFold
   , streamMap
   , streamFilter
