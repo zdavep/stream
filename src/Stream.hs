@@ -73,7 +73,7 @@ streamMap fn n is = do
       | otherwise = do
           v <- new
           let op = loop n t v
-          put_ o (Fork op (Cons (fn h) v))
+          put o (Fork op (Cons (fn h) v))
 
 -- Filter a stream using a predicate function producing another stream.
 streamFilter :: NFData a => (a -> Bool) -> Int -> Stream a -> Par (Stream a)
