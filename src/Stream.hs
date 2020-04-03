@@ -2,11 +2,12 @@
 {-# OPTIONS_GHC -fwarn-unused-imports #-}
 
 module Stream
-  ( streamFromList
-  , streamFold
-  , streamMap
-  , streamFilter
-  ) where
+  ( streamFromList,
+    streamFold,
+    streamMap,
+    streamFilter,
+  )
+where
 
 import Control.DeepSeq
 import Control.Monad.Par
@@ -34,11 +35,11 @@ streamFromList n xs = do
   return os
   where
     loop _ [] o = put o Nil
-    loop 0 (h:t) o = do
+    loop 0 (h : t) o = do
       v <- new
       let op = loop n t v
       put o (Fork op (Cons h v))
-    loop i (h:t) o = do
+    loop i (h : t) o = do
       v <- new
       put o (Cons h v)
       loop (i - 1) t v
@@ -67,13 +68,13 @@ streamMap fn n is = do
         Fork op (Cons h t) -> fork op >> proc x h t o
     proc x h t o
       | x > 0 = do
-          v <- new
-          put o (Cons (fn h) v)
-          loop (x - 1) t v
+        v <- new
+        put o (Cons (fn h) v)
+        loop (x - 1) t v
       | otherwise = do
-          v <- new
-          let op = loop n t v
-          put o (Fork op (Cons (fn h) v))
+        v <- new
+        let op = loop n t v
+        put o (Fork op (Cons (fn h) v))
 
 -- Filter a stream using a predicate function producing another stream.
 streamFilter :: NFData a => (a -> Bool) -> Int -> Stream a -> Par (Stream a)
@@ -90,12 +91,12 @@ streamFilter p n is = do
         Fork op (Cons h t) -> fork op >> proc x h t o
     proc x h t o
       | x > 0 && p h = do
-          v <- new
-          put_ o (Cons h v)
-          loop (x - 1) t v
+        v <- new
+        put_ o (Cons h v)
+        loop (x - 1) t v
       | x <= 0 && p h = do
-          v <- new
-          let op = loop n t v
-          put_ o (Fork op (Cons h v))
+        v <- new
+        let op = loop n t v
+        put_ o (Fork op (Cons h v))
       | otherwise =
-          loop (x - 1) t o
+        loop (x - 1) t o

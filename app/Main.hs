@@ -18,7 +18,7 @@ mfib n
 
 -- A type for errors
 newtype Error = Error String
-  deriving Show
+  deriving (Show)
 
 -- Calculate the n-th Fibonacci number using Either to handle negatives.
 efib :: Integer -> Either Error Integer
@@ -36,8 +36,8 @@ pipeline n xs =
     sm <- streamFold (+) 0 s2 -- streaming sum op
     return sm -- result
 
-      -- Calculate and print the sum of some even Fibonacci numbers.
+-- Calculate and print the sum of some even Fibonacci numbers.
 
 main :: IO ()
 main = do
-  putStrLn $ show (pipeline 10 [1.. 36])
+  putStrLn $ show (pipeline 10 [1 .. 36])
