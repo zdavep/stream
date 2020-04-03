@@ -9,22 +9,21 @@ module Stream
   )
 where
 
-import Control.DeepSeq
-import Control.Monad.Par
+import           Control.DeepSeq
+import           Control.Monad.Par
 
 -- IList is a parallel data structure.
-data IList a
-  = Nil
-  | Cons a (IVar (IList a))
-  | Fork (Par ()) (IList a) -- Indicates consumer must `fork` to continue
+data IList a = Nil
+    | Cons a (IVar (IList a))
+    | Fork (Par ()) (IList a)
 
 -- Stream is an IList that can be read (blocking) and written in parallel.
 type Stream a = IVar (IList a)
 
 -- Describe how to fully evaluate an IList
 instance NFData a => NFData (IList a) where
-  rnf Nil = ()
-  rnf (Cons a b) = rnf a `seq` rnf b
+  rnf Nil         = ()
+  rnf (Cons a b)  = rnf a `seq` rnf b
   rnf (Fork op a) = seq op $ rnf a
 
 -- Convert a list into a batched stream.
@@ -49,8 +48,8 @@ streamFold :: (a -> b -> a) -> a -> Stream b -> Par a
 streamFold fn !acc is = do
   il <- get is
   case il of
-    Nil -> return acc
-    Cons h t -> streamFold fn (fn acc h) t
+    Nil                -> return acc
+    Cons h t           -> streamFold fn (fn acc h) t
     Fork op (Cons h t) -> fork op >> streamFold fn (fn acc h) t
 
 -- Apply a map function to a stream producing another stream.
@@ -63,8 +62,8 @@ streamMap fn n is = do
     loop x i o = do
       il <- get i
       case il of
-        Nil -> put o Nil
-        Cons h t -> proc x h t o
+        Nil                -> put o Nil
+        Cons h t           -> proc x h t o
         Fork op (Cons h t) -> fork op >> proc x h t o
     proc x h t o
       | x > 0 = do
@@ -86,8 +85,8 @@ streamFilter p n is = do
     loop x i o = do
       il <- get i
       case il of
-        Nil -> put o Nil
-        Cons h t -> proc x h t o
+        Nil                -> put o Nil
+        Cons h t           -> proc x h t o
         Fork op (Cons h t) -> fork op >> proc x h t o
     proc x h t o
       | x > 0 && p h = do

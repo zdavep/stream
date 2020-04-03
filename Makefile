@@ -4,9 +4,9 @@ build: format
 	@stack build
 
 format:
-	@ormolu -m inplace src/*.hs
-	@ormolu -m inplace app/*.hs
-	@ormolu -m inplace test/*.hs
+	@stylish-haskell -i src/*.hs
+	@stylish-haskell -i app/*.hs
+	@stylish-haskell -i test/*.hs
 
 lint:
 	@hlint src/*.hs app/*.hs

@@ -1,7 +1,7 @@
 module Main where
 
-import Control.Monad.Par
-import Stream
+import           Control.Monad.Par
+import           Stream
 
 -- Calculate the n-th Fibonacci number using 0 to handle negatives.
 fib :: Integer -> Integer
