@@ -9,8 +9,8 @@ module Stream
   )
 where
 
-import           Control.DeepSeq
-import           Control.Monad.Par
+import Control.DeepSeq
+import Control.Monad.Par
 
 -- IList is a parallel data structure.
 data IList a = Nil
