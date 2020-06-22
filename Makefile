@@ -1,4 +1,4 @@
-.PHONY: build format lint test run clean
+.PHONY: build format lint test run clean repl
 
 build: format
 	@stack build
@@ -18,4 +18,7 @@ run:
 	@stack run
 
 clean:
-	@rm -rf .stack-work minq.cabal
+	@rm -rf .stack-work
+
+repl:
+	@stack repl

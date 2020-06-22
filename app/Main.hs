@@ -30,14 +30,13 @@ efib n
 pipeline :: Int -> [Integer] -> Integer
 pipeline n xs =
   runPar $ do
-    s0 <- streamFromList n xs -- emit list in batches of size `n`
+    s0 <- streamFromList n xs              -- emit list in batches of size `n`
     s1 <- streamFilter even (n `div` 2) s0 -- emit even numbers + halve batch size
-    s2 <- streamMap fib n s1 -- calc fib number
-    sm <- streamFold (+) 0 s2 -- streaming sum op
-    return sm -- result
+    s2 <- streamMap fib n s1               -- calc fib number
+    sm <- streamFold (+) 0 s2              -- streaming sum op
+    return sm                              -- result
 
 -- Calculate and print the sum of some even Fibonacci numbers.
-
 main :: IO ()
 main = do
   putStrLn $ show (pipeline 10 [1 .. 36])
